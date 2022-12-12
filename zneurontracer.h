@@ -50,7 +50,7 @@ public:
     m_signal = signal;
   }
 
-  ZSwcTree *reconstruct(std::vector<Locseg_Chain*> &chainArray, bool conn_flag);
+  ZSwcTree *reconstruct(std::vector<Locseg_Chain*> &chainArray, bool conn_flag, char *filePath);
 
 private:
   Connection_Test_Workspace *m_connWorkspace;
@@ -117,9 +117,9 @@ public:
    *
    * It will also create workspaces automatically if necessary.
    */
-  ZSwcTree* trace(Stack *stack, bool doResampleAfterTracing = true);
+  ZSwcTree* trace(Stack *stack, bool doResampleAfterTracing = true, char *filePath = NULL);
 
-  ZSwcTree* trace(const ZStack *stack, bool doResampleAfterTracing = true);
+  ZSwcTree* trace(const ZStack *stack, bool doResampleAfterTracing = true, char *filePath = NULL);
 
   //Autotrace configuration
   //Trace level setup: 1 - 10 (fast -> accurate)

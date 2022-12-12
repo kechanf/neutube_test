@@ -191,6 +191,7 @@ include(test/test.pri)
 # Input
 RESOURCES = gui.qrc
 HEADERS += mainwindow.h \
+    ../../../../../../../Qt/qt-4.8.7-x64-mingw510r0-seh/mingw64/x86_64-w64-mingw32/include/c++/iostream \
     ../c/tz_locseg_chain.h \
     ../lib/genelib/src/image_lib.h \
     widgets/zimagewidget.h \

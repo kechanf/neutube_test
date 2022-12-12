@@ -221,7 +221,7 @@ ZNeuronConstructor::ZNeuronConstructor() : m_connWorkspace(NULL), m_signal(NULL)
 
 }
 
-ZSwcTree *ZNeuronConstructor::reconstruct(std::vector<Locseg_Chain*> &chainArray, bool conn_flag)
+ZSwcTree *ZNeuronConstructor::reconstruct(std::vector<Locseg_Chain*> &chainArray, bool conn_flag, char *filePath)
 {
   ZSwcTree *tree = NULL;
 
@@ -260,11 +260,14 @@ ZSwcTree *ZNeuronConstructor::reconstruct(std::vector<Locseg_Chain*> &chainArray
     ns2 = Neuron_Structure_Locseg_Chain_To_Circle_S(ns, 1.0, 1.0);
 
     Neuron_Structure_To_Tree(ns2);
+    // RECORD_INFORMATION("************* Neuron_Structure_To_Tree end ******************");
 
     tree = new ZSwcTree;
     tree->setData(Neuron_Structure_To_Swc_Tree_Circle_Z(ns2, 1.0, NULL));
+    // RECORD_INFORMATION("************* Neuron_Structure_To_Swc_Tree_Circle_Z end ******************");
     tree->resortId();
-    tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_trace.swc");
+    // tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_trace.swc");
+    return tree;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
     //连接
@@ -286,7 +289,7 @@ ZSwcTree *ZNeuronConstructor::reconstruct(std::vector<Locseg_Chain*> &chainArray
     tree = new ZSwcTree;
     tree->setData(Neuron_Structure_To_Swc_Tree_Circle_Z(ns2, 1.0, NULL));
     tree->resortId();
-    tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_recons1.swc");
+    tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_recons.swc");
 
 
 
@@ -790,7 +793,7 @@ Stack *ZNeuronTracer::binarize(const Stack *stack)
   } else {
     binarizer.setMethod(ZStackBinarizer::BM_LOCMAX);
     binarizer.setRetryCount(3);
-    if (binarizer.binarize(out) == false) {
+    if (binarizer.binarize(out, -30) == false) {
       std::cout << "Thresholding failed" << std::endl;
       C_Stack::kill(out);
       out = NULL;
@@ -1198,7 +1201,7 @@ std::vector<Locseg_Chain*> ZNeuronTracer::screenChain(
   return goodChainArray;
 }
 
-ZSwcTree* ZNeuronTracer::trace(const ZStack *stack, bool doResampleAfterTracing)
+ZSwcTree* ZNeuronTracer::trace(const ZStack *stack, bool doResampleAfterTracing, char *filePath)
 {
   ZSwcTree *tree = NULL;
 
@@ -1206,14 +1209,15 @@ ZSwcTree* ZNeuronTracer::trace(const ZStack *stack, bool doResampleAfterTracing)
     Stack *signal = C_Stack::clone(stack->c_stack(m_preferredSignalChannel));
 
     if (signal != NULL) {
-      tree = trace(signal, doResampleAfterTracing);
+      tree = trace(signal, doResampleAfterTracing, filePath);
+      // RECORD_INFORMATION("************* 1111111111111111 ******************");
       C_Stack::kill(signal);
       if (tree != NULL) {
         tree->translate(stack->getOffset());
       }
     }
   }
-
+  // RECORD_INFORMATION("************* 222222222222222 ******************");  
   return tree;
 }
 
@@ -1308,7 +1312,7 @@ Stack* ZNeuronTracer::computeSeedMask(Stack *stack)
   return mask;
 }
 
-ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
+ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing, char *filePath)
 {
   startProgress();
 
@@ -1336,7 +1340,15 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
   Stack *bw = binarize(stack);
   C_Stack::translate(bw, GREY, 1);
 //  bw->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_bin.tif");
-  C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_bin.tif", bw);
+
+  char after_binarize_path[500];
+  memset(after_binarize_path, '\0', sizeof(after_binarize_path));
+  strncpy(after_binarize_path, (char*)(filePath), strlen(filePath)-4);
+  char* after_binarize_tag = "_after_binarize.tif";
+  strcat(after_binarize_path, after_binarize_tag);
+  C_Stack::write(after_binarize_path, bw);
+  // C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_binarize.tif", bw);
+
   RECORD_INFORMATION("************* binarize end!!!!!!!!! ******************");
   advanceProgress(0.05);
 
@@ -1345,7 +1357,14 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
   /* <mask> allocated */
   Stack *mask = bwsolid(bw);
 //  mask->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_remove_noise.tif");
-  C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_remove_noise.tif", mask);
+
+  char after_remove_noise_path[500];
+  memset(after_remove_noise_path, '\0', sizeof(after_remove_noise_path));
+  strncpy(after_remove_noise_path, (char*)(filePath), strlen(filePath)-4);
+  char* after_remove_noise_tag = "_remove_noise.tif";
+  strcat(after_remove_noise_path, after_remove_noise_tag);
+  C_Stack::write(after_remove_noise_path, bw);
+  // C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_remove_noise.tif", mask);
   RECORD_INFORMATION("************* Removing noise end!!!!!!!!! ******************");
   advanceProgress(0.05);
 
@@ -1444,7 +1463,7 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
   RECORD_INFORMATION("************* seed sort start!!!!!!!!! ******************");
   m_baseMask = seeder.sortSeed(seedPointArray, stack, m_traceWorkspace);
   RECORD_INFORMATION("************* seed sort end!!!!!!!!! ******************");
-  C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/m_baseMask.tif", m_baseMask);
+  //C_Stack::write("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/m_baseMask.tif", m_baseMask);
 
   QString s = QString::number(seedPointArray->size);
   std::string str_d = s.toStdString();
@@ -1508,10 +1527,12 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
   */
   // 关闭最短路测试
   m_connWorkspace->sp_test = FALSE;
-  m_connWorkspace->dist_thre *= 0.1;
+  m_connWorkspace->dist_thre *= 0.3;
 
   /* free <chainArray> */
-  tree = constructor.reconstruct(chainArray,1);
+  tree = constructor.reconstruct(chainArray, 1, filePath);
+  RECORD_INFORMATION("************* Reconstructing end!!!!!!!!! ******************");
+  return tree;
 //  tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/after_trace.swc");
 
 
@@ -1524,11 +1545,11 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
 
   //Post process 一些剪枝过程
   if (tree != NULL) {
-    Swc_Tree_Remove_Zigzag(tree->data());
-    Swc_Tree_Tune_Branch(tree->data());
-    Swc_Tree_Remove_Spur(tree->data());
-    Swc_Tree_Merge_Close_Node(tree->data(), 0.01);
-    Swc_Tree_Remove_Overshoot(tree->data());
+    // Swc_Tree_Remove_Zigzag(tree->data());
+    // Swc_Tree_Tune_Branch(tree->data());
+    // Swc_Tree_Remove_Spur(tree->data());
+    // Swc_Tree_Merge_Close_Node(tree->data(), 0.01);
+    // Swc_Tree_Remove_Overshoot(tree->data());
 
     if (doResampleAfterTracing) {
       ZSwcResampler resampler;
@@ -1537,7 +1558,7 @@ ZSwcTree* ZNeuronTracer::trace(Stack *stack, bool doResampleAfterTracing)
 
     ZSwcPruner pruner;
     pruner.setMinLength(0);
-    pruner.removeOrphanBlob(tree);
+    // pruner.removeOrphanBlob(tree);
 
     advanceProgress(0.1);
   }
@@ -1936,6 +1957,9 @@ Locseg_Chain_Comp_Neurostruct_plus(Neuron_Component *comp, int n,
                         &conn);
           BOOL conn_existed = FALSE;
 
+          // if(i == 0 && conn.info[0] == 0)
+          //   conn.cost = -1;
+
           if (i > j) { // 第二次判断两节点的连接情况
             if (ns->graph->nedge > 0) { // 存在路径
               int edge_idx = Graph_Edge_Index(j, i, gw);
@@ -1956,6 +1980,7 @@ Locseg_Chain_Comp_Neurostruct_plus(Neuron_Component *comp, int n,
           }
 
           if (conn_existed == FALSE) {
+            
             Neuron_Structure_Add_Conn(ns, i, j, &conn);
             Graph_Expand_Edge_Table(i, j, ns->graph->nedge - 1, gw);
           }
@@ -1973,6 +1998,8 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
 				  Neurocomp_Conn *conn, 
 				  Connection_Test_Workspace *ctw)
 {
+  conn->info[0] = -1;
+  conn->cost = 100000;
   TZ_ASSERT(ctw != NULL, "Null workspace");
 
   /* No connection if either of the chains is empty. */
@@ -2015,7 +2042,7 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
   Local_Neuroseg *locseg;
 
   double dist2soma = 0.0;
-  double mindist = 0.0;
+  double mindist = 100000;
 /*
   if (ctw->hook_spot == 0) {
     mindist = locseg_chain_dist_upper_bound(chain2, xz_ratio, head);
@@ -2030,8 +2057,8 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
 		    locseg_chain_dist_upper_bound(chain2, xz_ratio, tail));
   }
 */
-  mindist = dmin2(locseg_chain_dist_upper_bound(chain2, xz_ratio, head),
-		    locseg_chain_dist_upper_bound(chain2, xz_ratio, tail));
+  // mindist = dmin2(locseg_chain_dist_upper_bound(chain2, xz_ratio, head),
+	// 	    locseg_chain_dist_upper_bound(chain2, xz_ratio, tail));
 
   Locseg_Chain_Iterator_Start(chain2, DL_HEAD);
 
@@ -2154,8 +2181,9 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
 #endif
 
   //if ((conn->sdist > (ctw->dist_thre)) /*||  ((conn->sdist > big_euc) && (conn->pdist > big_planar))*/) 
-  if ((dist2soma <= 10 && conn->sdist > ctw->dist_thre * 2.0) ||
-      (dist2soma > 10 && conn->sdist > ctw->dist_thre)) // 优化soma附近的连接
+  // if ((dist2soma <= 10 && conn->sdist > ctw->dist_thre * 2.0) ||
+  //     (dist2soma > 10 && conn->sdist > ctw->dist_thre)) // 优化soma附近的连接
+  if (conn->sdist > ctw->dist_thre)
   {
     conn->mode = NEUROCOMP_CONN_NONE;
     //conn->cost = 10.0; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2221,7 +2249,7 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
     */
 
     // 最短路测试？
-    if ((conn->sdist > 2.0) && (ctw->sp_test == TRUE) && (stack != NULL)){
+    if (0 && (conn->sdist > 2.0) && (ctw->sp_test == TRUE) && (stack != NULL)){
       double gdist = 0.0;
       Stack_Graph_Workspace *sgw = New_Stack_Graph_Workspace();
       sgw->conn = 26;
@@ -2353,9 +2381,10 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
       //conn->cost = 1.0 / (1.0 + exp(-conn->sdist));
     } else {
       // conn->cost = 1.0 / (1.0 + exp(-conn->sdist / 100.0));
-      conn->cost = conn->sdist;
+      // conn->cost = conn->sdist * 100;
     }
-
+    
+    
     //conn->cost = 1.0 / (1.0 + exp(-feat[7]));
 
     /*
@@ -2414,6 +2443,7 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
   } 
   else 
   {
+    conn->cost = (conn->sdist + dist2soma) * 100 ;
     if (ctw->interpolate == TRUE) {
       if (conn->mode == NEUROCOMP_CONN_HL) // 连接中间
       {
@@ -2427,7 +2457,7 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
         else 
         {
           // 鼓励NEUROCOMP_CONN_LINK 这种情况，即鼓励head/tail to head/tail这种连接
-          conn->cost *= 0.5; 
+          // conn->cost *= 0.5; 
           if (conn->info[1] == 0)  // 连接头
           {
             conn->mode = NEUROCOMP_CONN_LINK;
@@ -2439,8 +2469,9 @@ BOOL Locseg_Chain_Connection_Test_Plus(Locseg_Chain *chain1, Locseg_Chain *chain
             conn->info[1] = 1;	  
           }
         }
-        if(dist2soma <= 7)
-          conn->cost *= 0.01;
+        // 需要适当的比soma的半径大一些
+        // if(dist2soma <= 10)
+        //   conn->cost *= 0.01;
       }
     }
     return TRUE;
@@ -2697,8 +2728,16 @@ void Graph_To_Mst2_plus(Graph *graph, Graph_Workspace *gw)
   int tmpid;
   int next;
   for (i = 0; i < graph->nedge; i++) {
+    QString s = QString::number(weights[sorted_edge_idx[i]]);
+    std::string str_d = s.toStdString();
+    // RECORD_INFORMATION("node");
+    // RECORD_INFORMATION(str_d);
+
     v1 = graph->edges[sorted_edge_idx[i]][0];
     v2 = graph->edges[sorted_edge_idx[i]][1];
+
+    // s = QString::number(v1);str_d = s.toStdString();RECORD_INFORMATION(str_d);
+    // s = QString::number(v2);str_d = s.toStdString();RECORD_INFORMATION(str_d);
 
     if (tree_id[v1] != tree_id[v2]) {
       tmpid = tree_id[v2]; /* save id of v2 */

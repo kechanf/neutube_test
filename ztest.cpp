@@ -270,6 +270,13 @@ using namespace std;
 #include "zswcconnector.h"
 #include "dialogs/zswcexportsvgdialog.h"
 
+#include <io.h>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+
 using namespace std;
 
 ostream& ZTest::m_failureStream = cerr;
@@ -19773,38 +19780,16 @@ void ZTest::test(MainWindow *host)
   stack.save(GET_TEST_DATA_DIR + "/test.tif");
 #endif
 
-#if 1
-  RECORD_INFORMATION("************* tracer test start!!!!!!!!! ******************");
-//  ZNeuronTracer tracer;
-//  tracer.test();
-
-  ZStack signal;
-  signal.load("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/example.tif");
-  //stack.load("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/example.tif");
-
-  ZNeuronTracer tracer;
-  tracer.setIntensityField(&signal);
-//  tracer.initTraceWorkspace(&signal);
-//  tracer.initConnectionTestWorkspace();
-
+ 
 #if 0
-  if (m_configJson.hasKey("trace")) {
-    tracer.loadJsonObject(
-          ZJsonObject(
-            m_configJson["trace"], ZJsonValue::SET_INCREASE_REF_COUNT));
-  }
+std::string __path = "C://Users//12626//Desktop//seu-allen//neuTube_win64.2018.07.12//neutube_ws2";
+std::string __dataType = ".tif";
+// DfsListFolderFiles(__path);
+search_file(__path.data(), __dataType.data());
 #endif
 
-  int level = 0;
-//  if (Is_Arg_Matched(const_cast<char*>("--level"))) {
-//    level = Get_Int_Arg(const_cast<char*>("--level"));
-//  }
-  tracer.setTraceLevel(level);
-
-  ZSwcTree *tree = tracer.trace(&signal);
-
-  tree->save("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/final.swc");
-  RECORD_INFORMATION("************* tracer test end!!!!!!!!! ******************");
+#if 1
+  Batch_processing();
 #endif
 
 #if 0
@@ -19878,4 +19863,105 @@ void ZTest::test(MainWindow *host)
 #endif
 
   std::cout << "Done." << std::endl;
+}
+
+void getAllFiles(std::string path, std::vector<std::string>& files)
+{
+  //文件句柄 
+  long  hFile = 0;
+  //文件信息 
+  struct _finddata_t fileinfo; //很少用的文件信息读取结构
+  std::string p; //string类很有意思的一个赋值函数:assign()，有很多重载版本
+  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) != -1)
+  {
+    do
+    {
+      if ((fileinfo.attrib & _A_SUBDIR)) //判断是否为文件夹
+      {
+        if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
+        {
+          files.push_back(p.assign(path).append("/").append(fileinfo.name));//保存文件夹名字
+          getAllFiles(p.assign(path).append("/").append(fileinfo.name), files);//递归当前文件夹
+        }
+      }
+      else  //文件处理
+      {
+        files.push_back(p.assign(path).append("/").append(fileinfo.name));//文件名
+      }
+    } while (_findnext(hFile, &fileinfo) == 0); //寻找下一个，成功返回0，否则-1
+    _findclose(hFile);
+  }
+}
+
+void Batch_processing()
+{
+  // std::string DATA_DIR = "C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws2";
+  std::string DATA_DIR = "E://crop_16bit_test"; // raw
+  std::vector<std::string> files;
+  //测试
+  char * DistAll = "AllFiles.txt";
+  getAllFiles(DATA_DIR, files);//所有文件与文件夹的路径都输出
+  // ofstream ofn(DistAll); //输出文件流
+  int size = files.size();
+  int FaiNum = 0;
+  // ofn << size << endl;
+  for (int i = 0; i<size; i++)
+  {
+    // ofn << files[i] << endl;
+    // RECORD_INFORMATION(files[i]);
+    char *fileType = ".tif";
+    if(strstr((char*)(files[i].data()), fileType))
+    {
+      RECORD_INFORMATION(files[i]);
+      temp_trace(files[i]);
+    } 
+  }
+  // ofn.close();
+  // return 0;
+}
+
+void temp_trace(std::string __path)
+{
+  //  ZNeuronTracer tracer;
+//  tracer.test();
+
+  ZStack signal;
+  signal.load((char*)(__path.data()));
+  //stack.load("C://Users/12626/Desktop/seu-allen/neuTube_win64.2018.07.12/neutube_ws/example.tif");
+
+  ZNeuronTracer tracer;
+  tracer.setIntensityField(&signal);
+//  tracer.initTraceWorkspace(&signal);
+//  tracer.initConnectionTestWorkspace();
+
+#if 0
+  if (m_configJson.hasKey("trace")) {
+    tracer.loadJsonObject(
+          ZJsonObject(
+            m_configJson["trace"], ZJsonValue::SET_INCREASE_REF_COUNT));
+  }
+#endif
+
+  int level = 0;
+//  if (Is_Arg_Matched(const_cast<char*>("--level"))) {
+//    level = Get_Int_Arg(const_cast<char*>("--level"));
+//  }
+  tracer.setTraceLevel(level);
+  ZSwcTree *tree = tracer.trace(&signal, true, (char*)(__path.data()));
+  RECORD_INFORMATION("************* tracer test end!!!!!!!!! ******************");
+  RECORD_INFORMATION((char*)(__path.data()));
+
+  QString s1 = QString::number(strlen((char*)(__path.data())));
+  std::string str_d1 = s1.toStdString();
+  RECORD_INFORMATION(str_d1);
+
+  char traced_path[500];
+  memset(traced_path, '\0', sizeof(traced_path));
+  strncpy(traced_path, (char*)(__path.data()), strlen((char*)(__path.data()))-4);
+  RECORD_INFORMATION(traced_path);
+  char* traced_tag = "_traced.swc";
+  strcat(traced_path, traced_tag);
+  RECORD_INFORMATION(traced_path);
+  tree->save(traced_path);
+  RECORD_INFORMATION("************* save end!!!!!!!!! ******************");
 }

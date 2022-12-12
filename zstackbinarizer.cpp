@@ -23,7 +23,7 @@ ZStackBinarizer::ZStackBinarizer() : m_reference(NULL), m_method(BM_MANUAL),
   } \
   free(hist);
 
-bool ZStackBinarizer::binarize(Stack *stack)
+bool ZStackBinarizer::binarize(Stack *stack, int threshold_offset)
 {
   if (stack == NULL) {
     return false;
@@ -113,7 +113,7 @@ bool ZStackBinarizer::binarize(Stack *stack)
     std::cout << "Threshold: " << threshold << std::endl;
 #endif
 
-    Stack_Threshold_Binarize(stack, int(threshold+10));
+    Stack_Threshold_Binarize(stack, int(threshold + threshold_offset));
   } else {
     Stack_Binarize(stack);
   }
