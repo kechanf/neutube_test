@@ -7,7 +7,7 @@ import numpy as np
 
 pixel_limit = [512,512,256] # 图像的最大像素
 home_path = 'C://Users//12626//Desktop//seu-allen//neuTube_win64.2018.07.12//segmentation//'
-test_file = "3822_1989_3217"
+test_file = "3904_2052_3251"
 
 def read_swc(swc_name):
     with open( home_path + swc_name + '.swc', 'r' ) as f:
@@ -43,11 +43,11 @@ for point in point_list:
     # print(point)
     if (float(point[2]) <= 0 or float(point[2]) >= pixel_limit[0] - 1):
         point[0] = -1
-        # continue
+        continue
     if (float(point[3]) <= 0 or float(point[3]) >= pixel_limit[1] - 1):
-        # continue
+        continue
     if (float(point[4]) <= 0 or float(point[4]) >= pixel_limit[2] - 1):
-        # continue
+        continue
     file.write(str(" ".join(point)))
     file.write("\n")
 
